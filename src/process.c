@@ -85,6 +85,40 @@ void process_feat(wav_info* winfo,double* data){
 	winfo->rms = rms_arr;
 }
 
+double* compare_rec(wav_info* w1,wav_info* w2){
+
+	int i = 0;
+	double* min_dist = calloc(sizeof(double),3);
+	if(w2->frame_num >= w1->frame_num){
+		for(i = 0;i < w2->frame_num - w1->frame_num;i++){
+			double mfcc_disp = mfcc_comp(w1->frame_num,w1->mfcc_size,w1->mfccs,w2->mfccs);
+			double massc_disp = massc_comp(w1->frame_num,w1->mass,w2->mass);
+			double rms_disp = massc_comp(w1->frame_num,w1->rms,w2->rms);
+			if(i == 0){
+				min_dist[0] = abs(mfcc_disp);
+				min_dist[1] = abs(massc_disp);
+				min_dist[2] = abs(rms_disp);
+			}else{
+				if(min_dist[0] > abs(mfcc_disp)){
+					min_dist[0] = abs(mfcc_disp);
+					if(min_dist[1] > abs(massc_disp)){
+						min_dist[1] = abs(massc_disp);
+					}
+					if(min_dist[2] > abs(rms_disp)){
+						min_dist[2] = abs(rms_disp);
+					}
+				}
+			}
+			w2->mass++;
+			w2->rms++;
+			w2->mfccs++;
+			printf("%d mfcc:%4.10f mass:%4.10f rms:%4.10f\n",i,mfcc_disp,massc_disp,rms_disp);
+			//break
+		}
+	}
+	return min_dist;
+}
+
 wav_info* read_data(char* filename){
 
 	SF_INFO sfinfo;

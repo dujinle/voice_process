@@ -19,6 +19,7 @@ typedef struct wavinfo{
 
 /* 处理被测试音频数据 */
 void process_feat(wav_info* winfo,double* data);
+double* compare_rec(wav_info* w1,wav_info* w2);
 
 wav_info* init_winfo(int size,int fs,int fsize,int fmove);
 wav_info* read_data(char* filename);
