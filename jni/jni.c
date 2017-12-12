@@ -1,28 +1,40 @@
 #include <android/native_window_jni.h>
 #include <jni.h>
 #include "process.h"
+#include "log.h"
 
 static jclass native_tm_class = NULL;
 
-jlong JNICALL cinit(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
+jbyteArray JNICALL cinit(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
 
+	LOG_DEBUG("start gointo cinit......\n");
 	wav_info* winfo = init_winfo(size,fs,fsize,fmove);
 	if(winfo == NULL){
-		return -1;
+		return NULL;
 	}
-	jlong p_tm = (long)winfo;
-	//jlong p_tm = reinterpret_cast<jlong>(winfo);
-	return p_tm;
+	int len = sizeof(wav_info);
+	LOG_DEBUG("cinit:%d\n",len);
+	char* wbytes = calloc(sizeof(char),len);
+	memcpy(wbytes,winfo,len);
+	jbyteArray jbytes = (*env)->NewByteArray(env,len);
+	(*env)->SetByteArrayRegion(env,jbytes,0,len,wbytes);
+	return jbytes;
 }
 
-void JNICALL native_pfeat(JNIEnv *env, jobject obj, jlong p_tm, jdoubleArray data){
+jbyteArray JNICALL native_pfeat(JNIEnv *env, jobject obj, jbyteArray inst, jdoubleArray data){
 
 	jdouble* ddata = (*env)->GetDoubleArrayElements(env,data,NULL);
 	if(NULL == ddata){ return; }
-	wav_info* native_tm = (wav_info*)p_tm;
-	//wav_info* native_tm = reinterpret_cast<wav_info*>(p_tm);
-	process_feat(native_tm,ddata);
+	wav_info* winfo = calloc(sizeof(wav_info),1);
+	memcpy(winfo,inst,sizeof(wav_info));
 
+	process_feat(winfo,ddata);
+	(*env)->ReleaseDoubleArrayElements(env,data,ddata,0);
+
+	int len = sizeof(wav_info);
+	jbyteArray jbytes = (*env)->NewByteArray(env,len);
+	(*env)->SetByteArrayRegion(env,jbytes,0,len,winfo);
+	return jbytes;
 }
 
 jdoubleArray JNICALL native_compare(JNIEnv* env, jobject obj, jlong p1, jlong p2) {
@@ -39,8 +51,8 @@ jdoubleArray JNICALL native_compare(JNIEnv* env, jobject obj, jlong p1, jlong p2
 }
 
 static JNINativeMethod methods[] = {
-	{ "create_obj", "(IIII)J", &cinit},
-	{ "process_feat", "(J[D)V", &native_pfeat},
+	{ "create_obj", "(IIII)[B", &cinit},
+	{ "process_feat", "(J[D)[B", &native_pfeat},
 	{ "compare", "(JJ)[D", &native_compare},
 };
 

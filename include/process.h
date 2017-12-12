@@ -14,7 +14,6 @@ typedef struct wavinfo{
 	double** mfccs;	//返回的结果
 	double* mass;	//质心参数存储
 	double* rms;	//均方根参数存储
-	double* wdata;	//wav数据的首地址
 }wav_info;
 
 /* 处理被测试音频数据 */
