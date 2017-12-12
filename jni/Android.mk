@@ -33,7 +33,7 @@ LOCAL_SRC_FILES := \
 	../src/core/tools.c \
 	../src/vad_snr/vad.c \
 	../src/process.c \
-	jni_VprocessJNI.c
+	jni.c
 
 LOCAL_LDLIBS    := -llog -lm -lz
 
