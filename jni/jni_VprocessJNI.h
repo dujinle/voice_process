@@ -2,8 +2,8 @@
 #include <jni.h>
 /* Header for class VprocessJNI */
 
-#ifndef _Included_VprocessJNI
-#define _Included_VprocessJNI
+#ifndef _Included_jni_VprocessJNI
+#define _Included_jni_VprocessJNI
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,7 +12,7 @@ extern "C" {
  * Method:    create_obj
  * Signature: (IIII)J
  */
-JNIEXPORT jlong JNICALL Java_VprocessJNI_create_1obj
+JNIEXPORT jlong JNICALL java_jni_VprocessJNI_create_1obj
   (JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove);
 
 /*
@@ -20,7 +20,7 @@ JNIEXPORT jlong JNICALL Java_VprocessJNI_create_1obj
  * Method:    process_feat
  * Signature: (J[D)V
  */
-JNIEXPORT void JNICALL Java_VprocessJNI_process_1feat
+JNIEXPORT void JNICALL java_jni_VprocessJNI_process_1feat
   (JNIEnv *env, jobject obj, jlong p_tm, jdoubleArray data);
 
 /*
@@ -28,7 +28,7 @@ JNIEXPORT void JNICALL Java_VprocessJNI_process_1feat
  * Method:    compare
  * Signature: (JJ)[D
  */
-JNIEXPORT jdoubleArray JNICALL Java_VprocessJNI_compare
+JNIEXPORT jdoubleArray JNICALL java_jni_VprocessJNI_compare
   (JNIEnv *env, jobject obj, jlong p1, jlong p2);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT jdoubleArray JNICALL Java_VprocessJNI_compare
  * Method:    destroy
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_VprocessJNI_destroy
+JNIEXPORT void JNICALL java_jni_VprocessJNI_destroy
   (JNIEnv *env, jobject obj, jlong p_tm);
 
 #ifdef __cplusplus
