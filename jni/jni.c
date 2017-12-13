@@ -24,26 +24,48 @@ jbyteArray JNICALL cinit_test(JNIEnv *env, jobject obj, jint size, jint fs, jint
 
 jdoubleArray JNICALL pfeat_test(JNIEnv *env, jobject obj, jbyteArray inst, jdoubleArray data){
 
+	LOG_DEBUG("start gointo pfeat_test......\n");
+
+	jbyte* bytes = (*env)->GetByteArrayElements(env,inst,NULL);
+	if(bytes == NULL){ return; }
+
+	wav_info* winfo = calloc(sizeof(wav_info),1);
+	memcpy(winfo,bytes,sizeof(wav_info));
+	LOG_DEBUG("create winfo success......\n");
+	LOG_DEBUG("size:%d......\n",winfo->size);
+	LOG_DEBUG("fs:%d......\n",winfo->fs);
+	LOG_DEBUG("fsize:%d......\n",winfo->fsize);
+
 	jdouble* ddata = (*env)->GetDoubleArrayElements(env,data,NULL);
 	if(NULL == ddata){ return; }
-	wav_info* winfo = calloc(sizeof(wav_info),1);
-	memcpy(winfo,inst,sizeof(wav_info));
 
-	process_feat(winfo,ddata);
-	(*env)->ReleaseDoubleArrayElements(env,data,ddata,0);
+	double* indata = calloc(sizeof(double),winfo->size);
+	memcpy(indata,ddata,sizeof(double) * winfo->size);
+	process_feat(winfo,indata);
 
-	int i ,idx = 0;
+	LOG_DEBUG("frame_num:%d......\n",winfo->frame_num);
+	LOG_DEBUG("mfcc_size:%d......\n",winfo->mfcc_size);
+
+	int i, j,idx = 0;
 	int mfcc_size = winfo->mfcc_size * winfo->frame_num;
 	int len = mfcc_size +  2 * winfo->frame_num;
-	jdoubleArray jds = (*env)->NewByteArray(env,len);
+	jdouble *tmp = (jdouble*)calloc(sizeof(jdouble),len);
+
+	jdoubleArray jds = (*env)->NewDoubleArray(env,len);
 	for(i = 0;i < winfo->frame_num;i++){
-		(*env)->SetDoubleArrayRegion(env,jds,idx,mfcc_size,winfo->mfccs[i]);
-		idx = idx + mfcc_size;
-		(*env)->SetDoubleArrayRegion(env,jds,idx,1,winfo->mass+i);
-		idx = idx + 1;
-		(*env)->SetDoubleArrayRegion(env,jds,idx,1,winfo->rms+i);
-		idx = idx + 1;
+		for(j = 0;j < winfo->mfcc_size;j++){
+			tmp[idx++] = winfo->mfccs[i][j];
+			LOG_DEBUG("%d %d %f",i,j,winfo->mfccs[i][j]);
+		}
+		LOG_DEBUG("end........................");
+		tmp[idx++] = winfo->mass[i];
+		tmp[idx++] = winfo->rms[i];
 	}
+	LOG_DEBUG("copy mfcc mass rms success [%d]......\n",idx);
+
+	(*env)->SetDoubleArrayRegion(env,jds,0,len,tmp);
+
+	(*env)->ReleaseDoubleArrayElements(env,data,ddata,0);
 
 	return jds;
 }
@@ -80,7 +102,9 @@ void JNICALL pfeat_real(JNIEnv *env, jobject obj, jlong inst, jdoubleArray data)
 	if(NULL == ddata){ return; }
 	wav_info* winfo = (wav_info*)inst;
 
-	process_feat(winfo,ddata);
+	double* indata = calloc(sizeof(double),winfo->size);
+	memcpy(indata,ddata,sizeof(double) * winfo->size);
+	process_feat(winfo,indata);
 	(*env)->ReleaseDoubleArrayElements(env,data,ddata,0);
 }
 
@@ -89,6 +113,7 @@ jdoubleArray JNICALL compare_real(JNIEnv* env, jobject obj, jlong p1, jlong p2) 
 	wav_info* w1 = (wav_info*)(p1);
 	wav_info* w2 = (wav_info*)(p2);
 	double* dist = compare_rec(w1,w2);
+	LOG_DEBUG("%f %f %f",dist[0],dist[1],dist[2]);
 	jdoubleArray iarr = (*env)->NewDoubleArray(env,3);
 	(*env)->SetDoubleArrayRegion(env,iarr,0,3,dist);
 	return iarr;
