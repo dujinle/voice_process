@@ -5,7 +5,8 @@
 
 static jclass native_tm_class = NULL;
 
-jbyteArray JNICALL cinit(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
+/* 测试用接口*/
+jbyteArray JNICALL cinit_test(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
 
 	LOG_DEBUG("start gointo cinit......\n");
 	wav_info* winfo = init_winfo(size,fs,fsize,fmove);
@@ -21,7 +22,7 @@ jbyteArray JNICALL cinit(JNIEnv *env, jobject obj, jint size, jint fs, jint fsiz
 	return jbytes;
 }
 
-jbyteArray JNICALL native_pfeat(JNIEnv *env, jobject obj, jbyteArray inst, jdoubleArray data){
+jdoubleArray JNICALL pfeat_test(JNIEnv *env, jobject obj, jbyteArray inst, jdoubleArray data){
 
 	jdouble* ddata = (*env)->GetDoubleArrayElements(env,data,NULL);
 	if(NULL == ddata){ return; }
@@ -31,29 +32,75 @@ jbyteArray JNICALL native_pfeat(JNIEnv *env, jobject obj, jbyteArray inst, jdoub
 	process_feat(winfo,ddata);
 	(*env)->ReleaseDoubleArrayElements(env,data,ddata,0);
 
-	int len = sizeof(wav_info);
-	jbyteArray jbytes = (*env)->NewByteArray(env,len);
-	(*env)->SetByteArrayRegion(env,jbytes,0,len,winfo);
-	return jbytes;
+	int i ,idx = 0;
+	int mfcc_size = winfo->mfcc_size * winfo->frame_num;
+	int len = mfcc_size +  2 * winfo->frame_num;
+	jdoubleArray jds = (*env)->NewByteArray(env,len);
+	for(i = 0;i < winfo->frame_num;i++){
+		(*env)->SetDoubleArrayRegion(env,jds,idx,mfcc_size,winfo->mfccs[i]);
+		idx = idx + mfcc_size;
+		(*env)->SetDoubleArrayRegion(env,jds,idx,1,winfo->mass+i);
+		idx = idx + 1;
+		(*env)->SetDoubleArrayRegion(env,jds,idx,1,winfo->rms+i);
+		idx = idx + 1;
+	}
+
+	return jds;
 }
 
-jdoubleArray JNICALL native_compare(JNIEnv* env, jobject obj, jlong p1, jlong p2) {
+jdoubleArray JNICALL compare_test(JNIEnv* env, jobject obj, jbyteArray p1, jbyteArray p2) {
 
 	//wav_info* w1 = reinterpret_cast<wav_info*>(p1);
 	//wav_info* w2 = reinterpret_cast<wav_info*>(p2);
+	/*
 	wav_info* w1 = (wav_info*)(p1);
 	wav_info* w2 = (wav_info*)(p2);
 	double* dist = compare_rec(w1,w2);
 	jdoubleArray iarr = (*env)->NewDoubleArray(env,3);
 	(*env)->SetDoubleArrayRegion(env,iarr,0,3,dist);
+	return iarr;
+	*/
+	return NULL;
+}
 
+/* 以下是 release 使用接口 */
+jlong JNICALL cinit_real(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
+
+	LOG_DEBUG("start gointo cinit......\n");
+	wav_info* winfo = init_winfo(size,fs,fsize,fmove);
+	if(winfo == NULL){
+		return NULL;
+	}
+	return (jlong)winfo;
+}
+
+void JNICALL pfeat_real(JNIEnv *env, jobject obj, jlong inst, jdoubleArray data){
+
+	jdouble* ddata = (*env)->GetDoubleArrayElements(env,data,NULL);
+	if(NULL == ddata){ return; }
+	wav_info* winfo = (wav_info*)inst;
+
+	process_feat(winfo,ddata);
+	(*env)->ReleaseDoubleArrayElements(env,data,ddata,0);
+}
+
+jdoubleArray JNICALL compare_real(JNIEnv* env, jobject obj, jlong p1, jlong p2) {
+
+	wav_info* w1 = (wav_info*)(p1);
+	wav_info* w2 = (wav_info*)(p2);
+	double* dist = compare_rec(w1,w2);
+	jdoubleArray iarr = (*env)->NewDoubleArray(env,3);
+	(*env)->SetDoubleArrayRegion(env,iarr,0,3,dist);
 	return iarr;
 }
 
 static JNINativeMethod methods[] = {
-	{ "create_obj", "(IIII)[B", &cinit},
-	{ "process_feat", "(J[D)[B", &native_pfeat},
-	{ "compare", "(JJ)[D", &native_compare},
+	{ "init_test", "(IIII)[B", &cinit_test},
+	{ "init_real", "(IIII)J", &cinit_real},
+	{ "pfeat_test", "([B[D)[D", &pfeat_test},
+	{ "pfeat_real", "(J[D)V", &pfeat_real},
+	{ "compare_test", "([B[B)[D", &compare_test},
+	{ "compare_real", "(JJ)[D", &compare_real},
 };
 
 //extern "C" JNIEXPORT 
