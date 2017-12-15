@@ -1,5 +1,7 @@
 #ifndef PROCESS_HEADER
 #define PROCESS_HEADER
+#include "sndfile/sndfile.h"
+
 typedef struct wavinfo{
 	short size;		//音频数据的大小
 	short fs;		//采样率
@@ -14,6 +16,7 @@ typedef struct wavinfo{
 	double** mfccs;	//返回的结果
 	double* mass;	//质心参数存储
 	double* rms;	//均方根参数存储
+	SNDFILE* sf;		//读取文件的句柄
 }wav_info;
 
 /* 处理被测试音频数据 */
@@ -21,5 +24,7 @@ void process_feat(wav_info* winfo,double* data);
 double* compare_rec(wav_info* w1,wav_info* w2);
 
 wav_info* init_winfo(int size,int fs,int fsize,int fmove);
+wav_info* read_handler(char* filename);
+double* read_wav(wav_info* winfo,int size);
 
 #endif

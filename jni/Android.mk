@@ -14,9 +14,8 @@ LOCAL_MODULE    := libprocess
 
 # The order of these libraries is often important.
 
-#LOCAL_LDFLAGS += \
-#	"$(NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/thumb/libgnustl_static.a" \
-#	"$(NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/thumb/libsupc++.a" \
+LOCAL_LDFLAGS += \
+	"${LOCAL_PATH}/../libs/android/libsndfile.a"
 
 LOCAL_C_INCLUDES = $(P_INCLUDE_PATH)
 

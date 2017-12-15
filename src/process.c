@@ -117,3 +117,28 @@ double* compare_rec(wav_info* w1,wav_info* w2){
 	}
 	return min_dist;
 }
+
+wav_info* read_handler(char* filename){
+
+	SF_INFO sfinfo;
+	memset (&sfinfo, 0, sizeof (SF_INFO));
+	SNDFILE* sf = sf_open (filename, SFM_READ, &sfinfo);
+	if(sf == NULL){
+		printf ("Error opening %s.\n", filename) ;
+		return NULL;
+	}
+	sf_count_t samples = sfinfo.frames / sfinfo.channels;
+	wav_info* winfo = init_winfo(samples,sfinfo.samplerate,256,80);
+	winfo->sf = sf;
+	return winfo;
+}
+
+double* read_wav(wav_info* winfo,int size){
+	double* data = (double*)calloc(sizeof(double),size + 1);
+	if(data == NULL){
+		return NULL;
+	}
+	int nread = sf_readf_double(winfo->sf,data + 1,size);
+	data[0] = nread;
+	return data;
+}

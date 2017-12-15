@@ -86,6 +86,14 @@ jdoubleArray JNICALL compare_test(JNIEnv* env, jobject obj, jbyteArray p1, jbyte
 }
 
 /* 以下是 release 使用接口 */
+jlong JNICALL get_wav_handler(JNIEnv *env, jobject obj,jstring filename){
+	const char* str = (*env)->GetStringUTFChars(env,filename, NULL);
+	LOG_DEBUG("start gointo get_wav_handler %s\n",str);
+	wav_info* winfo = read_handler(str);
+
+	return (jlong)winfo;
+}
+
 jlong JNICALL cinit_real(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
 
 	LOG_DEBUG("start gointo cinit......\n");
@@ -94,6 +102,16 @@ jlong JNICALL cinit_real(JNIEnv *env, jobject obj, jint size, jint fs, jint fsiz
 		return NULL;
 	}
 	return (jlong)winfo;
+}
+
+jdoubleArray JNICALL native_read_wav(JNIEnv *env, jobject obj,jlong inst,jint size){
+
+	wav_info* winfo = (wav_info*)inst;
+	double* data = read_wav(winfo,size);
+
+	jdoubleArray iarr = (*env)->NewDoubleArray(env,size + 1);
+	(*env)->SetDoubleArrayRegion(env,iarr,0,size + 1,data);
+	return iarr;
 }
 
 void JNICALL pfeat_real(JNIEnv *env, jobject obj, jlong inst, jdoubleArray data){
@@ -126,6 +144,8 @@ static JNINativeMethod methods[] = {
 	{ "pfeat_real", "(J[D)V", &pfeat_real},
 	{ "compare_test", "([B[B)[D", &compare_test},
 	{ "compare_real", "(JJ)[D", &compare_real},
+	{ "get_handler", "(Ljava/lang/String;)J", &get_wav_handler},
+	{ "read_wav", "(JI)[D", &native_read_wav},
 };
 
 //extern "C" JNIEXPORT 
