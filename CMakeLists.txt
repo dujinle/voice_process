@@ -18,8 +18,7 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 
 
 add_executable(audio-cmp main.c)
-#target_link_libraries(audio-cmp ${libsndfile})
-#target_link_libraries(audio-cmp m)
 target_link_libraries(audio-cmp libprocess)
-#target_link_libraries(audio-cmp libvad)
-#target_link_libraries(audio-cmp libcore)
+
+add_executable(test_rw test_rw.c)
+target_link_libraries(test_rw libprocess)

@@ -25,6 +25,8 @@ double* compare_rec(wav_info* w1,wav_info* w2);
 
 wav_info* init_winfo(int size,int fs,int fsize,int fmove);
 wav_info* read_handler(char* filename);
+wav_info* creat_wchar_writer(char* filename,int fs,int bits,int channels);
+int write_cdata(wav_info* winfo,short* data,int lens);
 double* read_wav(wav_info* winfo,int size);
-
+void close_fd(wav_info* winfo);
 #endif

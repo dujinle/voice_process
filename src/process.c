@@ -142,3 +142,40 @@ double* read_wav(wav_info* winfo,int size){
 	data[0] = nread;
 	return data;
 }
+
+wav_info* creat_wchar_writer(char* filename,int fs,int bits,int channels){
+
+	wav_info* winfo = calloc(sizeof(wav_info),1);
+	SF_INFO sfinfo ;
+	sfinfo.samplerate = fs;
+	sfinfo.frames = 0; /* Wrong length. Library should correct this on sf_close. */
+	sfinfo.channels = 1 ;
+	if(bits == 16){
+		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+	}else{
+		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_U8;
+	}
+	SNDFILE* sf = sf_open (filename, SFM_WRITE, &sfinfo);
+	if(sf == NULL){
+		return NULL;
+	}
+	winfo->sf = sf;
+	winfo->fs = fs;
+
+	return winfo;
+}
+
+int write_cdata(wav_info* winfo,short* sdata,int lens){
+	sf_count_t count ;
+
+	if ((count = sf_write_short (winfo->sf, sdata, lens)) != lens){
+		return -1;
+	}
+	return 0;
+}
+
+void close_fd(wav_info* winfo){
+	if(winfo->sf != NULL){
+		sf_close (winfo->sf) ;
+	}
+}
