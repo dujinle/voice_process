@@ -1,14 +1,13 @@
 #include <android/native_window_jni.h>
 #include <jni.h>
 #include "process.h"
-#include "log.h"
 
 static jclass native_tm_class = NULL;
 
 /* 以下是 release 使用接口 */
 jlong JNICALL get_wav_handler(JNIEnv *env, jobject obj,jstring filename){
 	const char* str = (*env)->GetStringUTFChars(env,filename, NULL);
-	LOG_DEBUG("start gointo get_wav_handler %s\n",str);
+	LOGI("start gointo get_wav_handler %s\n",str);
 	wav_info* winfo = read_handler(str);
 	if(winfo == NULL){
 		return -1;
@@ -19,7 +18,7 @@ jlong JNICALL get_wav_handler(JNIEnv *env, jobject obj,jstring filename){
 
 jlong JNICALL get_write_handler(JNIEnv *env, jobject obj,jstring filename,jint fs,jint bits,jint channels){
 	const char* str = (*env)->GetStringUTFChars(env,filename, NULL);
-	LOG_DEBUG("start gointo get_write_handler %s\n",str);
+	LOGI("start gointo get_write_handler %s\n",str);
 
 	wav_info* winfo = creat_wchar_writer(str,fs,bits,channels);
 
@@ -31,7 +30,7 @@ jlong JNICALL get_write_handler(JNIEnv *env, jobject obj,jstring filename,jint f
 
 jlong JNICALL cinit_real(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
 
-	LOG_DEBUG("start gointo cinit......\n");
+	LOGI("start gointo cinit......\n");
 	wav_info* winfo = init_winfo(size,fs,fsize,fmove);
 	if(winfo == NULL){
 		return NULL;
@@ -61,7 +60,7 @@ jint JNICALL native_write_wav(JNIEnv *env, jobject obj,jlong inst,jshortArray da
 
 void JNICALL pfeat_real(JNIEnv *env, jobject obj, jlong inst, jdoubleArray data){
 
-	LOG_DEBUG("start go into pfeat_real ......");
+	LOGI("start go into pfeat_real ......");
 	jdouble* ddata = (*env)->GetDoubleArrayElements(env,data,NULL);
 	if(NULL == ddata){ return; }
 	wav_info* winfo = (wav_info*)inst;
@@ -74,11 +73,11 @@ void JNICALL pfeat_real(JNIEnv *env, jobject obj, jlong inst, jdoubleArray data)
 
 jdoubleArray JNICALL compare_real(JNIEnv* env, jobject obj, jlong p1, jlong p2) {
 
-	LOG_DEBUG("start go into compare_real ......");
+	LOGI("start go into compare_real ......");
 	wav_info* w1 = (wav_info*)(p1);
 	wav_info* w2 = (wav_info*)(p2);
 	double* dist = compare_rec(w1,w2);
-	LOG_DEBUG("%f %f %f",dist[0],dist[1],dist[2]);
+	LOGI("%f %f %f",dist[0],dist[1],dist[2]);
 	jdoubleArray iarr = (*env)->NewDoubleArray(env,3);
 	(*env)->SetDoubleArrayRegion(env,iarr,0,3,dist);
 	return iarr;
@@ -105,16 +104,16 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 	JNIEnv* env = NULL;
 	if ((*vm)->GetEnv(vm,(void**)&env, JNI_VERSION_1_6) != JNI_OK) {
-#ifdef DEBUG_LOG
-		LOG_ERROR("get env failed");
+#ifdef ANDROID_DEBUG_LOG
+		LOGE("get env failed");
 #endif
 		return JNI_ERR;
 	}
 
 	native_tm_class = (*env)->FindClass(env,"jni/VprocessJNI");
 	if(native_tm_class == NULL){
-#ifdef DEBUG_LOG
-		LOG_ERROR("not found java class VprocessJNI");
+#ifdef ANDROID_DEBUG_LOG
+		LOGE("not found java class VprocessJNI");
 #endif
 		return JNI_ERR;
 	}
@@ -122,8 +121,8 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 	int len = sizeof(methods) / sizeof(methods[0]);
 	if ((*env)->RegisterNatives(env,native_tm_class, methods,len) < 0) {
-#ifdef DEBUG_LOG
-		LOG_ERROR("register natives methods failed");
+#ifdef ANDROID_DEBUG_LOG
+		LOGE("register natives methods failed");
 #endif
 		return JNI_ERR;
 	}
@@ -135,8 +134,8 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
 	JNIEnv* env = NULL;
 	if ((*vm)->GetEnv(vm,(void**)&env, JNI_VERSION_1_6) != JNI_OK) {
-#ifdef DEBUG_LOG
-		LOG_ERROR("get env failed");
+#ifdef ANDROID_DEBUG_LOG
+		LOGE("get env failed");
 #endif
 		return ;
 	}
