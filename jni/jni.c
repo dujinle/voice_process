@@ -61,6 +61,7 @@ jint JNICALL native_write_wav(JNIEnv *env, jobject obj,jlong inst,jshortArray da
 
 void JNICALL pfeat_real(JNIEnv *env, jobject obj, jlong inst, jdoubleArray data){
 
+	LOG_DEBUG("start go into pfeat_real ......");
 	jdouble* ddata = (*env)->GetDoubleArrayElements(env,data,NULL);
 	if(NULL == ddata){ return; }
 	wav_info* winfo = (wav_info*)inst;
@@ -73,6 +74,7 @@ void JNICALL pfeat_real(JNIEnv *env, jobject obj, jlong inst, jdoubleArray data)
 
 jdoubleArray JNICALL compare_real(JNIEnv* env, jobject obj, jlong p1, jlong p2) {
 
+	LOG_DEBUG("start go into compare_real ......");
 	wav_info* w1 = (wav_info*)(p1);
 	wav_info* w2 = (wav_info*)(p2);
 	double* dist = compare_rec(w1,w2);
@@ -88,6 +90,7 @@ void JNICALL native_close_file(JNIEnv *env, jobject obj, jlong inst){
 }
 
 static JNINativeMethod methods[] = {
+	{ "init_real","(IIII)J",&cinit_real},
 	{ "pfeat_real", "(J[D)V", &pfeat_real},
 	{ "compare_real", "(JJ)[D", &compare_real},
 	{ "get_handler", "(Ljava/lang/String;)J", &get_wav_handler},
