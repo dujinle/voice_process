@@ -1,6 +1,11 @@
 #ifndef PROCESS_HEADER
 #define PROCESS_HEADER
 #include "sndfile/sndfile.h"
+#define ANDROID_DEBUG_LOG
+
+#ifdef ANDROID_DEBUG_LOG
+#include "android_log.h"
+#endif
 
 typedef struct wavinfo{
 	short size;		//音频数据的大小

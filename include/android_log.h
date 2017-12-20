@@ -3,6 +3,12 @@
 
 #include <android/log.h>
 
+#define TAG "main"
+
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,TAG,__VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,TAG,__VA_ARGS__)
+/*
 #define S(x) #x
 #define S_(x) S(x)
 #define S__LINE__ S_(__LINE__)
@@ -14,5 +20,5 @@
 #define LOG_ERROR(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, __FILE__ ":" S__LINE__, fmt, ##args)
 #define LOG_ASSERT(cond, ...) ((cond)?(void)0:__android_log_assert(#cond, __FILE__ ":" S__LINE__, NULL))
 #define LOG_ASSERTMSG(cond, fmt, args...) ((cond)?(void)0:__android_log_assert(#cond, __FILE__ ":" S__LINE__, fmt, ##args))
-
+*/
 #endif // LOG_H

@@ -61,7 +61,10 @@ void process_feat(wav_info* winfo,double* data){
 		//计算质心 和 均方差
 		mass_arr[i] = mass_center(winfo->fsize,fdata,winfo->bank_num);
 		rms_arr[i] = rms(winfo->fsize,fdata,winfo->bank_num);
+#ifdef ANDROID_DEBUG_LOG
+		LOGI("mcenter:%d %4.10f %4.10f\n",i,mass_arr[i],rms_arr[i]);
 		//printf("mcenter:%4.10f %4.10f\n",mass_arr[i],rms_arr[i]);
+#endif
 
 		//数据加窗处理 为后面的特征提取做准备
 		hamming(fdata,winfo->fsize);
@@ -74,10 +77,14 @@ void process_feat(wav_info* winfo,double* data){
 		square_array(winfo->fsize,fdata);
 		//构造melbank系数
 		mel_fbankm(winfo->fbank_num,winfo->fsize,winfo->fs,0, 0.5,coeff);
-		//printf("mel_bank success......\n");
+#ifdef ANDROID_DEBUG_LOG
+		LOGI("mel_bank frame[%d] success......\n",i);
+#endif
 		mfcc(winfo->fbank_num,fbank_size,coeff,fdata,fbank_size,winfo->mfcc_size,mfccs);
 		memcpy(mfcc_mat[i],mfccs,sizeof(double) * winfo->mfcc_size);
-		//printf("mfcc success......\n");
+#ifdef ANDROID_DEBUG_LOG
+		LOGI("mfcc frame[%d] success......\n",i);
+#endif
 	}
 	winfo->mfccs = mfcc_mat;
 	winfo->mass = mass_arr;
@@ -89,7 +96,7 @@ double* compare_rec(wav_info* w1,wav_info* w2){
 	int i = 0;
 	double* min_dist = calloc(sizeof(double),3);
 	if(w2->frame_num >= w1->frame_num){
-		for(i = 0;i < w2->frame_num - w1->frame_num;i++){
+		for(i = 0;i < w2->frame_num - w1->frame_num + 1;i++){
 			double mfcc_disp = mfcc_comp(w1->frame_num,w1->mfcc_size,w1->mfccs,w2->mfccs);
 			double massc_disp = massc_comp(w1->frame_num,w1->mass,w2->mass);
 			double rms_disp = massc_comp(w1->frame_num,w1->rms,w2->rms);
@@ -111,7 +118,9 @@ double* compare_rec(wav_info* w1,wav_info* w2){
 			w2->mass++;
 			w2->rms++;
 			w2->mfccs++;
-			printf("%d mfcc:%4.10f mass:%4.10f rms:%4.10f\n",i,mfcc_disp,massc_disp,rms_disp);
+#ifdef ANDROID_DEBUG_LOG
+			LOGI("%d mfcc:%4.10f mass:%4.10f rms:%4.10f\n",i,mfcc_disp,massc_disp,rms_disp);
+#endif
 			//break
 		}
 	}
@@ -167,10 +176,12 @@ wav_info* creat_wchar_writer(char* filename,int fs,int bits,int channels){
 
 int write_cdata(wav_info* winfo,short* sdata,int lens){
 	sf_count_t count ;
-
 	if ((count = sf_write_short (winfo->sf, sdata, lens)) != lens){
 		return -1;
 	}
+#ifdef ANDROID_DEBUG_LOG
+	LOGI("write data size:%d",lens);
+#endif
 	return 0;
 }
 
