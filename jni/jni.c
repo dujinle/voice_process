@@ -88,6 +88,7 @@ void JNICALL native_close_file(JNIEnv *env, jobject obj, jlong inst){
 }
 
 static JNINativeMethod methods[] = {
+	{ "init_real","(IIII)J",&cinit_real},
 	{ "pfeat_real", "(J[D)V", &pfeat_real},
 	{ "compare_real", "(JJ)[D", &compare_real},
 	{ "get_handler", "(Ljava/lang/String;)J", &get_wav_handler},

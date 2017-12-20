@@ -26,7 +26,11 @@ static wav_info* read_data(char* filename){
 		printf("read data len error\n");
 		return NULL;
 	}
-
+	int i = 0;
+	for(i = 0;i < 20;i++){
+		printf("%f\t",data[i]);
+	}
+	printf("\n");
 	wav_info* winfo = init_winfo(samples,sfinfo.samplerate,256,80);
 
 	return winfo;
@@ -50,6 +54,8 @@ int main (int argc, char *argv []){
 	wav_info* w1 = init_winfo(3000,8000,256,80);
 	wav_info* w2 = init_winfo(3000,8000,256,80);
 
+	wav_info* wt = read_data(f1);
+	return 0;
 	double* data = calloc(sizeof(double),3000);
 	for(i = 0;i < 3000;i++){
 		if(i%2 == 0){
