@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.6)
 
-ADD_SUBDIRECTORY(vad_snr)
+ADD_SUBDIRECTORY(vad)
 ADD_SUBDIRECTORY(core)
 
 SET(RESOURCES
 	process.c
+	config.c
 )
 
 ADD_LIBRARY(libprocess STATIC ${RESOURCES})

@@ -19,6 +19,8 @@ void arr_mul_arr(int x,double* a,int y,double* b,double* out);
 
 /* log 对数组的每一个值进行log运算 */
 void log_array(int n,double* fin);
+
+void les2d_array(short* src,int count,double* dest);
 ////////////////////////////////////////////
 #endif
 

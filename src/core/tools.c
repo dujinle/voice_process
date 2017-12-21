@@ -1,4 +1,5 @@
 #include "core/tools.h"
+#include "sndfile/sfendian.h"
 #include <math.h>
 
 /* 复数 转化为 实数 abs(a + bi) = sqrt(a^2 + b^2)*/
@@ -47,5 +48,14 @@ void log_array(int n,double* fin){
 	int i = 0;
 	for(i = 0;i < n;i++){
 		fin[i] = log(fin[i]);
+	}
+}
+/*short 转为 double 小端模式*/
+void les2d_array(short* src,int count,double* dest){
+	short value ;
+	while (--count >= 0){
+		value = src [count];
+		value = LE2H_16 (value) ;
+		dest [count] = (double) value * 1.0 / ((double) 0x8000);
 	}
 }

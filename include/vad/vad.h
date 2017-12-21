@@ -1,45 +1,29 @@
+#ifndef SNR_VAD_HEADER
+#define SNR_VAD_HEADER
+#include "config.h"
 /*
- *  Copyright (c) 2014 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
+ * 基于信噪比的vad端点检测
+ * 音频数据 8K 16Bit
+*/
 
-#ifndef WEBRTC_COMMON_AUDIO_VAD_INCLUDE_VAD_H_
-#define WEBRTC_COMMON_AUDIO_VAD_INCLUDE_VAD_H_
+typedef struct vad_inst{
+	short frame_size;		//记录帧长 32ms默认
+	short frame_move;		//记录帧移 距离默认10ms
+	short frame_base;		//基于开始的参数
+	double fac;				//能量阈值
+	double ffac;			//能量阈值2
+	double energy;			//一帧的能量
+	short voice;			//记录当前帧是否活跃
+	short findx;			//记录当前是第几帧
 
-#include "webrtc/base/checks.h"
-#include "webrtc/common_audio/vad/include/webrtc_vad.h"
-#include "webrtc/typedefs.h"
+} vad_stc;
 
-namespace webrtc {
+/* 创建一个vad对象句柄 参数必须 */
+vad_stc* vad_creat(config_stc* conf);
 
-// This is a C++ wrapper class for WebRtcVad.
-class Vad {
- public:
-  enum Aggressiveness {
-    kVadNormal = 0,
-    kVadLowBitrate = 1,
-    kVadAggressive = 2,
-    kVadVeryAggressive = 3
-  };
+/* 初始化 vad对象 包括参数 */
+void vad_reset(vad_stc* vad_handle);
 
-  enum Activity { kPassive = 0, kActive = 1, kError = -1 };
-
-  explicit Vad(enum Aggressiveness mode);
-
-  virtual ~Vad();
-
-  virtual Activity VoiceActivity(const int16_t* audio,
-                                 size_t num_samples,
-                                 int sample_rate_hz);
-
- private:
-  VadInst* handle_;
-};
-
-}  // namespace webrtc
-#endif  // WEBRTC_COMMON_AUDIO_VAD_INCLUDE_VAD_H_
+/* vad操作 数据为一帧 音频数据 0:sil 1:speech */
+int vad_process(vad_stc* vad_handle,double* data);
+#endif

@@ -27,40 +27,21 @@ void hamming(double *win,int len){
 	}
 }
 
-int* enframe(int offset ,int len,int frame_size,int frame_inc,int last_frame){
+int* enframe(int len,int frame_size,int frame_inc){
 	/* 计算可以分多少帧*/
-	/* 如果 offset == 0 则开始分帧 */
-	if(offset == 0){
-		int frame_len = floor((len - frame_size + frame_inc) / frame_inc);
-		if(frame_len > 0){
-			int* frames = calloc(sizeof(int),frame_len + 1);
-			frames[0] = frame_len;
+	int frame_len = floor((len - frame_size + frame_inc) / frame_inc);
+	if(frame_len > 0){
+		int* frames = calloc(sizeof(int),frame_len + 1);
+		frames[0] = frame_len;
 
-			int i,step = 0;
-			for(i = 1;i <= frame_len;i++){
-				frames[i] = step;
-				step = step + frame_inc;
-			}
-			return frames;
+		int i,step = 0;
+		for(i = 1;i <= frame_len;i++){
+			frames[i] = step;
+			step = step + frame_inc;
 		}
-	}else{
-		/* 不是开始分帧则需要加上前面的帧移 长度 */
-		int left = offset - (last_frame + frame_size);
-		int start = offset - (left + frame_inc);
-		int tmp_len = len + (left + frame_inc);
-
-		int frame_len = floor((tmp_len - frame_size + frame_inc) / frame_inc);
-		if(frame_len > 0){
-			int* frames = calloc(sizeof(int),frame_len + 1);
-			int i = 0;
-			for(i = 1;i < frame_len + 1;i++){
-				frames[i] = start;
-				start = start + frame_inc;
-			}
-			frames[0] = frame_len;
-			return frames;
-		}
+		return frames;
 	}
+
 	return NULL;
 }
 

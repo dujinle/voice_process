@@ -22,3 +22,6 @@ target_link_libraries(audio-cmp libprocess)
 
 add_executable(test_rw test_rw.c)
 target_link_libraries(test_rw libprocess)
+
+add_executable(test_config test_config.c)
+target_link_libraries(test_config libprocess)

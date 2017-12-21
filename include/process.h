@@ -1,7 +1,8 @@
 #ifndef PROCESS_HEADER
 #define PROCESS_HEADER
 #include "sndfile/sndfile.h"
-#define ANDROID_DEBUG_LOG
+#include "vad/vad.h"
+//#define ANDROID_DEBUG_LOG
 
 #ifdef ANDROID_DEBUG_LOG
 #include "android_log.h"
@@ -10,6 +11,7 @@
 typedef struct wavinfo{
 	short size;		//音频数据的大小
 	short fs;		//采样率
+	short fb;		//采样bit大小16
 	short fsize;	//分帧大小256
 	short fmove;	//帧移大小80
 	short bank_num;	//一帧数据子带的个数 默认32
@@ -18,9 +20,12 @@ typedef struct wavinfo{
 	short frame_num;//帧个数
 	short start;	//开始处理的有效帧
 	short end;		//结束的有效帧
+	short left;	//上次处理的遗留数据size
 	double** mfccs;	//返回的结果
 	double* mass;	//质心参数存储
 	double* rms;	//均方根参数存储
+	double* ldata;	//上次处理的遗留数据
+	vad_stc* vad;//vad对象
 	SNDFILE* sf;		//读取文件的句柄
 }wav_info;
 
@@ -32,6 +37,7 @@ wav_info* init_winfo(int size,int fs,int fsize,int fmove);
 wav_info* read_handler(char* filename);
 wav_info* creat_wchar_writer(char* filename,int fs,int bits,int channels);
 int write_cdata(wav_info* winfo,short* data,int lens);
-double* read_wav(wav_info* winfo,int size);
+int read_double_wav(wav_info* winfo,double* data,int size);
+int read_short_wav(wav_info* winfo,short* data,int size);
 void close_fd(wav_info* winfo);
 #endif

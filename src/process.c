@@ -4,7 +4,7 @@
 #include	<inttypes.h>
 #include	<ctype.h>
 
-#include	"vad_snr/vad.h"
+#include	"vad/vad.h"
 #include	"core/pre_process.h"
 #include	"core/fft.h"
 #include	"core/tools.h"
@@ -12,35 +12,51 @@
 #include	"core/cmfcc.h"
 #include	"core/mass_center.h"
 #include	"process.h"
+#include	"config.h"
 
-wav_info* init_winfo(int size,int fs,int fsize,int fmove){
+wav_info* creat_winfo(char* conf_file){
+
+	config_stc* conf = calloc(sizeof(config_stc),1);
+
+	int ret = paser_config(conf_file,conf);
+	if(ret == -1){
+		return NULL;
+	}
+
 	wav_info* winfo = calloc(sizeof(wav_info),1);
-	winfo->size = size;
-	winfo->fs = fs;
-	winfo->fsize = fsize;
-	winfo->fmove = fmove;
-	winfo->bank_num = 32;
-	winfo->fbank_num = 24;
-	winfo->mfcc_size = 12;
+	//是否开启vad过滤音频数据
+	if(conf->vad == 1){
+		winfo->vad = vad_creat(conf);
+	}else{
+		winfo->vad = NULL;
+	}
+	winfo->size = 0;
+	winfo->fs = conf->sample_rate;
+	winfo->fb = conf->sample_bit;
+	winfo->fsize = conf->frame_size;
+	winfo->fmove = conf->frame_move;
+	winfo->bank_num = conf->bank_num;
+	winfo->fbank_num = conf->fbank_num;
+	winfo->mfcc_size = conf->mfcc_size;
+	winfo->left = 0;
 	winfo->start = -1;
 	winfo->end = -1;
 
 	return winfo;
 }
-
 /* 处理被测试音频数据 */
 void process_feat(wav_info* winfo,double* data){
 
 	int i = 0;//mfcc参数个数12
 	int fbank_size = winfo->fsize /2 + 1;//滤波器的参数个数
 
-	vad_stc* vad = vad_creat(winfo->fs,winfo->fsize,winfo->fmove);
+	//vad_stc* vad = vad_creat(winfo->fs,winfo->fsize,winfo->fmove);
 
 	//printf("pre_emphasise......\n");
 	pre_emphasise(data,0,winfo->size,data,0.9375);
 
 	//printf("enframe......\n");
-	int* frames = enframe(0,winfo->size,winfo->fsize,winfo->fmove,0);
+	int* frames = enframe(winfo->size,winfo->fsize,winfo->fmove);
 	winfo->frame_num = *frames++;
 
 	double **coeff = calloc_mat(winfo->fbank_num,fbank_size);
@@ -127,61 +143,96 @@ double* compare_rec(wav_info* w1,wav_info* w2){
 	return min_dist;
 }
 
-wav_info* read_handler(char* filename){
+int set_reader(wav_info* winfo,char* filename){
 
+	printf("start set reader ......\n");
 	SF_INFO sfinfo;
 	memset (&sfinfo, 0, sizeof (SF_INFO));
 	SNDFILE* sf = sf_open (filename, SFM_READ, &sfinfo);
 	if(sf == NULL){
 		printf ("Error opening %s.\n", filename) ;
-		return NULL;
+		return -1;
+	}
+	winfo->sf = sf;
+	if(winfo->fs != sfinfo.samplerate){
+		winfo->fs = sfinfo.samplerate;
 	}
 	sf_count_t samples = sfinfo.frames / sfinfo.channels;
-	wav_info* winfo = init_winfo(samples,sfinfo.samplerate,256,80);
-	winfo->sf = sf;
-	return winfo;
+	winfo->size = samples;
+	return 0;
 }
 
-double* read_wav(wav_info* winfo,int size){
-	double* data = (double*)calloc(sizeof(double),size + 1);
-	if(data == NULL){
-		return NULL;
-	}
-	int nread = sf_readf_double(winfo->sf,data + 1,size);
-	data[0] = nread;
-	return data;
+int read_double_wav(wav_info* winfo,double* data,int size){
+	int nread = sf_readf_double(winfo->sf,data,size);
+	return nread;
 }
 
-wav_info* creat_wchar_writer(char* filename,int fs,int bits,int channels){
+int read_short_wav(wav_info* winfo,short*data,int size){
+	int nread = sf_readf_short(winfo->sf,data,size);
+	return nread;
+}
 
-	wav_info* winfo = calloc(sizeof(wav_info),1);
+int set_writer(wav_info* winfo,char* filename){
+
 	SF_INFO sfinfo ;
-	sfinfo.samplerate = fs;
+	sfinfo.samplerate = winfo->fs;
 	sfinfo.frames = 0; /* Wrong length. Library should correct this on sf_close. */
-	sfinfo.channels = 1 ;
-	if(bits == 16){
+	sfinfo.channels = 1;
+	if(winfo->fb == 16){
 		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
 	}else{
 		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_U8;
 	}
 	SNDFILE* sf = sf_open (filename, SFM_WRITE, &sfinfo);
 	if(sf == NULL){
-		return NULL;
+		return -1;
 	}
 	winfo->sf = sf;
-	winfo->fs = fs;
-
-	return winfo;
+	return 0;
 }
 
 int write_cdata(wav_info* winfo,short* sdata,int lens){
-	sf_count_t count ;
-	if ((count = sf_write_short (winfo->sf, sdata, lens)) != lens){
-		return -1;
+	int i = 0,step = 0;
+	short* data = calloc(sizeof(short),lens + winfo->left);
+	if(winfo->left > 0){
+		memcpy(data,winfo->ldata,sizeof(short) * winfo->left);
+		lens = lens + winfo->left;
 	}
+	memcpy(data + winfo->left,sdata,sizeof(short) * lens);
+	if(winfo->vad != NULL){
+		int* frames = enframe(lens,winfo->fsize,winfo->fmove);
+		short st[winfo->fsize];
+		double dd[winfo->fsize];
+		for(i = 1;i< frames[0];i++){
+			step = frames[i] + winfo->fsize;
+			memcpy(st,data + frames[i],winfo->fsize);
+			les2d_array(st,winfo->fsize,dd);
+			int voice = vad_process(winfo->vad,dd);
+			if(voice == 0){
 #ifdef ANDROID_DEBUG_LOG
-	LOGI("write data size:%d",lens);
+				LOGI("vad filter data size:%d",frames[i]);
 #endif
+				continue;
+			}
+			sf_count_t count = sf_write_short (winfo->sf, data + frames[i], winfo->fmove);
+#ifdef ANDROID_DEBUG_LOG
+			LOGI("write data size:%d",winfo->fmove);
+#endif
+		}
+		if(step < lens){
+			winfo->left = lens - step;
+			winfo->ldata = calloc(sizeof(short),winfo->left);
+			memcpy(winfo->ldata,data + step,sizeof(short) * winfo->left);
+		}
+	}else{
+		sf_count_t count ;
+		if ((count = sf_write_short (winfo->sf, sdata, lens)) != lens){
+			return -1;
+		}
+#ifdef ANDROID_DEBUG_LOG
+		LOGI("write data size:%d",lens);
+#endif
+	}
 	return 0;
 }
 
