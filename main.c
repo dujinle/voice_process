@@ -8,31 +8,21 @@
 #include	"sndfile/sndfile.h"
 #include	"process.h"
 
-static void usage_exit (const char *progname){
-	printf ("Usage :\n  %s <bfile> <ffile>...\n", progname) ;
-	exit (1) ;
-} /* usage_exit */
-
-
 int main (int argc, char *argv []){
-	if (argc != 3 || strcmp (argv [1], "--help") == 0 || strcmp (argv [1], "-h") == 0)
-		usage_exit (argv [0]) ;
 
 	char* conf = strdup(argv[1]);
 	wav_info* w1 = creat_winfo(conf);
+	wav_info* w2 = creat_winfo(conf);
 
 	char* f1 = strdup(argv[2]);
+	char* f2 = strdup(argv[3]);
 	set_reader(w1,f1);
+	set_writer(w2,f2);
 
-	int total = 0;
-	double data[2048];
-	while(1){
-		int nread = read_double_wav(w1,data,2048);
-		if(nread < 2048){
-			break;
-		}
-		total = total + nread;
-	}
-	printf("read size:%d",total);
+	short data[w1->size];
+	int nread = read_short_wav(w1,data,w1->size);
+	int t = write_cdata(w2,data,w1->size);
+	close_fd(w1);
+	close_fd(w2);
 	return 0 ;
 } /* main */

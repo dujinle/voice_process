@@ -13,6 +13,9 @@
 #include	"core/mass_center.h"
 #include	"process.h"
 #include	"config.h"
+#ifdef ANDROID_DEBUG_LOG
+#include	"android_log.h"
+#endif
 
 wav_info* creat_winfo(char* conf_file){
 
@@ -27,6 +30,9 @@ wav_info* creat_winfo(char* conf_file){
 	//是否开启vad过滤音频数据
 	if(conf->vad == 1){
 		winfo->vad = vad_creat(conf);
+#ifdef ANDROID_DEBUG_LOG
+		LOGI("open vad filter wav......");
+#endif
 	}else{
 		winfo->vad = NULL;
 	}
@@ -38,6 +44,8 @@ wav_info* creat_winfo(char* conf_file){
 	winfo->bank_num = conf->bank_num;
 	winfo->fbank_num = conf->fbank_num;
 	winfo->mfcc_size = conf->mfcc_size;
+	winfo->start_append = conf->vad_start_append;
+	winfo->end_append = conf->vad_end_append;
 	winfo->left = 0;
 	winfo->start = -1;
 	winfo->end = -1;
@@ -159,6 +167,15 @@ int set_reader(wav_info* winfo,char* filename){
 	}
 	sf_count_t samples = sfinfo.frames / sfinfo.channels;
 	winfo->size = samples;
+	winfo->left = 0;
+	winfo->start = -1;
+	winfo->end = -1;
+	winfo->ldata = NULL;
+	winfo->start_data = NULL;
+	winfo->mfccs = NULL;
+	winfo->mass = NULL;
+	winfo->rms = NULL;
+	winfo->frame_num = 0;
 	return 0;
 }
 
@@ -187,11 +204,25 @@ int set_writer(wav_info* winfo,char* filename){
 	if(sf == NULL){
 		return -1;
 	}
+	/*如果获取writer 并且启动了vad则开始分配 内存存储静音数据*/
+	if(winfo->vad != NULL){
+		winfo->start_data = calloc(sizeof(short),winfo->start_append * winfo->fsize);
+		memset(winfo->start_data,0,winfo->start_append * winfo->fsize);
+	}
 	winfo->sf = sf;
+	winfo->left = 0;
+	winfo->start = -1;
+	winfo->end = -1;
+	winfo->ldata = NULL;
+	winfo->start_data = NULL;
+	winfo->mfccs = NULL;
+	winfo->mass = NULL;
+	winfo->rms = NULL;
+	winfo->frame_num = 0;
 	return 0;
 }
 
-int write_cdata(wav_info* winfo,short* sdata,int lens){
+int write_cdata(wav_info* winfo,short* sdata,int lens,int flg){
 	int i = 0,step = 0;
 	short* data = calloc(sizeof(short),lens + winfo->left);
 	if(winfo->left > 0){
@@ -212,7 +243,12 @@ int write_cdata(wav_info* winfo,short* sdata,int lens){
 #ifdef ANDROID_DEBUG_LOG
 				LOGI("vad filter data size:%d",frames[i]);
 #endif
+				printf("vad filter data size:%d\n",frames[i]);
 				continue;
+			}
+			if(winfo->start == -1){
+				winfo->start = i;
+				sf_write_short (winfo->sf,winfo->start_data, winfo->start_append * winfo->fsize);
 			}
 			sf_count_t count = sf_write_short (winfo->sf, data + frames[i], winfo->fmove);
 #ifdef ANDROID_DEBUG_LOG
@@ -224,6 +260,12 @@ int write_cdata(wav_info* winfo,short* sdata,int lens){
 			winfo->ldata = calloc(sizeof(short),winfo->left);
 			memcpy(winfo->ldata,data + step,sizeof(short) * winfo->left);
 		}
+		/*音频的结尾了*/
+		/*
+		if(flg == 1){
+			sf_write_short (winfo->sf,winfo->start_data, winfo->start_append * winfo->fsize);
+		}
+		*/
 	}else{
 		sf_count_t count ;
 		if ((count = sf_write_short (winfo->sf, sdata, lens)) != lens){
@@ -233,6 +275,7 @@ int write_cdata(wav_info* winfo,short* sdata,int lens){
 		LOGI("write data size:%d",lens);
 #endif
 	}
+	sf_write_sync(winfo->sf);
 	return 0;
 }
 

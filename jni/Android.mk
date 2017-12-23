@@ -30,8 +30,9 @@ LOCAL_SRC_FILES := \
 	../src/core/mel_bank.c \
 	../src/core/pre_process.c \
 	../src/core/tools.c \
-	../src/vad_snr/vad.c \
+	../src/vad/vad.c \
 	../src/process.c \
+	../src/config.c \
 	jni.c
 
 LOCAL_LDLIBS    := -llog -lm -lz

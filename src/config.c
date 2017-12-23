@@ -8,7 +8,7 @@ int paser_config(char* filename,config_stc* conf){
 	if(fp == NULL){
 		return -1;
 	}
-	int value = 0;
+	float value = 0.0;
 	char line[1024],name[48];
 	while(fgets(line,1024,fp) != NULL){
 		int len = strlen(line);
@@ -16,7 +16,7 @@ int paser_config(char* filename,config_stc* conf){
 		if(strlen(line) == 0 || line[0] == '#'){
 			continue;
 		}
-		int r = sscanf(line, "%[^ \t]%*[ \t]=%*[ \t]%d;",name,&value);
+		int r = sscanf(line, "%[^ \t]%*[ \t]=%*[ \t]%f;",name,&value);
 		if(r != 2){
 			return -1;
 		}
@@ -40,9 +40,15 @@ int paser_config(char* filename,config_stc* conf){
 			conf->bank_num = value;
 		}else if(strcmp(name,"fbank_num") == 0){
 			conf->fbank_num = value;
+		}else if(strcmp(name,"vad_fac") == 0){
+			conf->vad_fac = value;
 		}else if(strcmp(name,"mfcc_size") == 0){
 			conf->mfcc_size = value;
 		}
 	}
+	printf("%s:%d\n","vad",conf->vad);
+	printf("%s:%f\n","vad_fac",conf->vad_fac);
+	printf("%s:%d\n","sample_rate",conf->sample_rate);
+	printf("%s:%d\n","sample_bit",conf->sample_bit);
 	return 0;
 }

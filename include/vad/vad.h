@@ -15,6 +15,7 @@ typedef struct vad_inst{
 	double energy;			//一帧的能量
 	short voice;			//记录当前帧是否活跃
 	short findx;			//记录当前是第几帧
+	short speech;			//记录状态延续
 
 } vad_stc;
 

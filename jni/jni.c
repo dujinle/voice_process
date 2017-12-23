@@ -5,33 +5,26 @@
 static jclass native_tm_class = NULL;
 
 /* 以下是 release 使用接口 */
-jlong JNICALL get_wav_handler(JNIEnv *env, jobject obj,jstring filename){
+jint JNICALL set_wav_reader(JNIEnv *env, jobject obj,jlong inst,jstring filename){
 	const char* str = (*env)->GetStringUTFChars(env,filename, NULL);
 	LOGI("start gointo get_wav_handler %s\n",str);
-	wav_info* winfo = read_handler(str);
-	if(winfo == NULL){
-		return -1;
-	}
-
-	return (jlong)winfo;
+	int ret = set_reader((wav_info*)inst,str);
+	return ret;
 }
 
-jlong JNICALL get_write_handler(JNIEnv *env, jobject obj,jstring filename,jint fs,jint bits,jint channels){
+jint JNICALL set_wav_writer(JNIEnv *env, jobject obj,jlong inst,jstring filename){
 	const char* str = (*env)->GetStringUTFChars(env,filename, NULL);
 	LOGI("start gointo get_write_handler %s\n",str);
 
-	wav_info* winfo = creat_wchar_writer(str,fs,bits,channels);
-
-	if(winfo == NULL){
-		return -1;
-	}
-	return (jlong)winfo;
+	int ret = set_writer((wav_info*)inst,str);
+	return ret;
 }
 
-jlong JNICALL cinit_real(JNIEnv *env, jobject obj, jint size, jint fs, jint fsize, jint fmove){
+jlong JNICALL cinit_real(JNIEnv *env, jobject obj,jstring conf){
 
 	LOGI("start gointo cinit......\n");
-	wav_info* winfo = init_winfo(size,fs,fsize,fmove);
+	const char* str = (*env)->GetStringUTFChars(env,conf, NULL);
+	wav_info* winfo = creat_winfo(str);
 	if(winfo == NULL){
 		return NULL;
 	}
@@ -41,18 +34,23 @@ jlong JNICALL cinit_real(JNIEnv *env, jobject obj, jint size, jint fs, jint fsiz
 jdoubleArray JNICALL native_read_wav(JNIEnv *env, jobject obj,jlong inst,jint size){
 
 	wav_info* winfo = (wav_info*)inst;
-	double* data = read_wav(winfo,size);
+	double* data = calloc(sizeof(double),size + 1);
+	if(data == NULL){
+		return NULL;
+	}
+	int nread = read_double_wav(winfo,data + 1,size);
+	data[0] = nread;
 
 	jdoubleArray iarr = (*env)->NewDoubleArray(env,size + 1);
 	(*env)->SetDoubleArrayRegion(env,iarr,0,size + 1,data);
 	return iarr;
 }
 
-jint JNICALL native_write_wav(JNIEnv *env, jobject obj,jlong inst,jshortArray data,jint size){
+jint JNICALL native_write_wav(JNIEnv *env, jobject obj,jlong inst,jshortArray data,jint size,jint flg){
 
 	wav_info* winfo = (wav_info*)inst;
 	jshort* sdata = (*env)->GetShortArrayElements(env,data,NULL);
-	int rec = write_cdata(winfo,sdata,size);
+	int rec = write_cdata(winfo,sdata,size,flg);
 	(*env)->ReleaseShortArrayElements(env,data,sdata,0);
 
 	return rec;
@@ -89,13 +87,13 @@ void JNICALL native_close_file(JNIEnv *env, jobject obj, jlong inst){
 }
 
 static JNINativeMethod methods[] = {
-	{ "init_real","(IIII)J",&cinit_real},
+	{ "init_real","(Ljava/lang/String;)J",&cinit_real},
 	{ "pfeat_real", "(J[D)V", &pfeat_real},
 	{ "compare_real", "(JJ)[D", &compare_real},
-	{ "get_handler", "(Ljava/lang/String;)J", &get_wav_handler},
-	{ "get_write_handler", "(Ljava/lang/String;III)J", &get_write_handler},
+	{ "set_wave_reader", "(JLjava/lang/String;)I", &set_wav_reader},
+	{ "set_wave_writer", "(JLjava/lang/String;)I", &set_wav_writer},
 	{ "read_wav", "(JI)[D", &native_read_wav},
-	{ "write_wav", "(J[SI)I", &native_write_wav},
+	{ "write_wav", "(J[SII)I", &native_write_wav},
 	{ "close_file", "(J)V", &native_close_file},
 };
 

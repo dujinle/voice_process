@@ -3,6 +3,7 @@
 typedef struct config{
 	int vad;
 	int vad_base;
+	float vad_fac;
 	int vad_start_append;
 	int vad_end_append;
 	int sample_rate;
