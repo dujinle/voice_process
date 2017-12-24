@@ -46,6 +46,21 @@ jdoubleArray JNICALL native_read_wav(JNIEnv *env, jobject obj,jlong inst,jint si
 	return iarr;
 }
 
+jshortArray JNICALL native_read_swav(JNIEnv *env, jobject obj,jlong inst,jint size){
+
+	wav_info* winfo = (wav_info*)inst;
+	short* data = calloc(sizeof(short),size + 1);
+	if(data == NULL){
+		return NULL;
+	}
+	int nread = read_short_wav(winfo,data + 1,size);
+	data[0] = nread;
+
+	jshortArray iarr = (*env)->NewShortArray(env,size + 1);
+	(*env)->SetShortArrayRegion(env,iarr,0,size + 1,data);
+	return iarr;
+}
+
 jint JNICALL native_write_wav(JNIEnv *env, jobject obj,jlong inst,jshortArray data,jint size,jint flg){
 
 	wav_info* winfo = (wav_info*)inst;
@@ -93,6 +108,7 @@ static JNINativeMethod methods[] = {
 	{ "set_wave_reader", "(JLjava/lang/String;)I", &set_wav_reader},
 	{ "set_wave_writer", "(JLjava/lang/String;)I", &set_wav_writer},
 	{ "read_wav", "(JI)[D", &native_read_wav},
+	{ "read_short_wav", "(JI)[S", &native_read_swav},
 	{ "write_wav", "(J[SII)I", &native_write_wav},
 	{ "close_file", "(J)V", &native_close_file},
 };
