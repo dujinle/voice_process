@@ -208,7 +208,7 @@ int set_writer(wav_info* winfo,char* filename){
 	if(winfo->vad != NULL){
 		winfo->start_data = calloc(sizeof(short),winfo->start_append * winfo->fsize);
 		memset(winfo->start_data,0,winfo->start_append * winfo->fsize * sizeof(short));
-		winfo->vad->vad_reset();
+		vad_reset(winfo->vad);
 	}
 	winfo->sf = sf;
 	winfo->left = 0;
