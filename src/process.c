@@ -228,6 +228,7 @@ int write_cdata(wav_info* winfo,short* sdata,int lens,int flg){
 	if(winfo->left > 0){
 		memcpy(data,winfo->ldata,sizeof(short) * winfo->left);
 		lens = lens + winfo->left;
+		winfo->left = 0;
 	}
 	memcpy(data + winfo->left,sdata,sizeof(short) * lens);
 	if(winfo->vad != NULL){
@@ -257,6 +258,9 @@ int write_cdata(wav_info* winfo,short* sdata,int lens,int flg){
 		}
 		if(step < lens){
 			winfo->left = lens - step;
+#ifdef ANDROID_DEBUG_LOG
+			LOGI("left data size:%d",winfo->left);
+#endif
 			winfo->ldata = calloc(sizeof(short),winfo->left);
 			memcpy(winfo->ldata,data + step,sizeof(short) * winfo->left);
 		}
@@ -280,6 +284,15 @@ int write_cdata(wav_info* winfo,short* sdata,int lens,int flg){
 }
 
 void close_fd(wav_info* winfo){
+	winfo->left = 0;
+	winfo->start = -1;
+	winfo->end = -1;
+	winfo->ldata = NULL;
+	winfo->start_data = NULL;
+	winfo->mfccs = NULL;
+	winfo->mass = NULL;
+	winfo->rms = NULL;
+	winfo->frame_num = 0;
 	if(winfo->sf != NULL){
 		sf_close (winfo->sf) ;
 	}
