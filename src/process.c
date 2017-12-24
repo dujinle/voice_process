@@ -176,7 +176,7 @@ int set_reader(wav_info* winfo,char* filename){
 	winfo->mass = NULL;
 	winfo->rms = NULL;
 	winfo->frame_num = 0;
-	return 0;
+	return winfo->size;
 }
 
 int read_double_wav(wav_info* winfo,double* data,int size){
