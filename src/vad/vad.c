@@ -42,8 +42,9 @@ vad_stc* vad_creat(config_stc* conf){
 	vad_handle->frame_size = conf->frame_size;
 	vad_handle->frame_move = conf->frame_move;
 	vad_handle->frame_base = conf->vad_base;
+	vad_handle->flevel = conf->vad_fac;
 	vad_handle->fac = 0;
-	vad_handle->ffac = conf->vad_fac;
+	vad_handle->ffac = 0;
 	vad_handle->energy = 0;
 	vad_handle->voice = 0;
 	vad_handle->speech = 0;
@@ -79,7 +80,7 @@ int vad_process(vad_stc* vad_handle,double* data){
 	}
 	if(vad_handle->findx == vad_handle->frame_base){
 		vad_handle->fac = vad_handle->fac / ((double)(vad_handle->frame_base));
-		vad_handle->ffac = vad_handle->fac * vad_handle->ffac;
+		vad_handle->ffac = vad_handle->fac * vad_handle->flevel;
 	}
 #ifdef ANDROID_DEBUG_LOG
 	LOGI("idx:%d energy:%f fac:%f ffac:%f\n",vad_handle->findx,fsum,vad_handle->fac,vad_handle->ffac);

@@ -207,7 +207,8 @@ int set_writer(wav_info* winfo,char* filename){
 	/*如果获取writer 并且启动了vad则开始分配 内存存储静音数据*/
 	if(winfo->vad != NULL){
 		winfo->start_data = calloc(sizeof(short),winfo->start_append * winfo->fsize);
-		memset(winfo->start_data,0,winfo->start_append * winfo->fsize);
+		memset(winfo->start_data,0,winfo->start_append * winfo->fsize * sizeof(short));
+		winfo->vad->vad_reset();
 	}
 	winfo->sf = sf;
 	winfo->left = 0;
@@ -227,17 +228,19 @@ int write_cdata(wav_info* winfo,short* sdata,int lens,int flg){
 	short* data = calloc(sizeof(short),lens + winfo->left);
 	if(winfo->left > 0){
 		memcpy(data,winfo->ldata,sizeof(short) * winfo->left);
+		memcpy(data + winfo->left,sdata,sizeof(short) * lens);
 		lens = lens + winfo->left;
 		winfo->left = 0;
+	}else{
+		memcpy(data,sdata,sizeof(short) * lens);
 	}
-	memcpy(data + winfo->left,sdata,sizeof(short) * lens);
 	if(winfo->vad != NULL){
 		int* frames = enframe(lens,winfo->fsize,winfo->fmove);
 		short st[winfo->fsize];
 		double dd[winfo->fsize];
 		for(i = 1;i< frames[0];i++){
 			step = frames[i] + winfo->fsize;
-			memcpy(st,data + frames[i],winfo->fsize);
+			memcpy(st,data + frames[i],sizeof(short)*winfo->fsize);
 			les2d_array(st,winfo->fsize,dd);
 			int voice = vad_process(winfo->vad,dd);
 			if(voice == 0){

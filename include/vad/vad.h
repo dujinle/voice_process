@@ -10,6 +10,7 @@ typedef struct vad_inst{
 	short frame_size;		//记录帧长 32ms默认
 	short frame_move;		//记录帧移 距离默认10ms
 	short frame_base;		//基于开始的参数
+	double flevel;			//阈值 1 和2 的倍数关系
 	double fac;				//能量阈值
 	double ffac;			//能量阈值2
 	double energy;			//一帧的能量
